@@ -290,6 +290,7 @@ function handleKeyUp(event) {
 		pressed : true,
 	};
 	switch (event.keyCode) {
+		// --- TOP TO BOTTOM --- //
 		case 81: // 'Q'
 		case 87: // 'W'
 			window.keyEvent.rotation = 'TTB';
@@ -308,6 +309,48 @@ function handleKeyUp(event) {
 			window.keyEvent.direction = event.keyCode === 90 ? 'CW' : 'CCW';
 			window.keyEvent.layer = 2;
 			break;
+		// --------------------- //
+		// --- LEFT TO RIGHT --- //
+		case 69: // 'E'
+		case 82: // 'R'
+			window.keyEvent.rotation = 'LTR';
+			window.keyEvent.direction = event.keyCode === 69 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 0;
+			break;
+		case 68: // 'D'
+		case 70: // 'F'
+			window.keyEvent.rotation = 'LTR';
+			window.keyEvent.direction = event.keyCode === 68 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 1;
+			break;
+		case 67: //'C'
+		case 86: //'V'
+			window.keyEvent.rotation = 'LTR';
+			window.keyEvent.direction = event.keyCode === 67 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 2;
+			break;
+		// --------------------- //
+		// --- FRONT TO HIND --- //
+		case 84: // 'T'
+		case 89: // 'Y'
+			window.keyEvent.rotation = 'FTH';
+			window.keyEvent.direction = event.keyCode === 84 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 0;
+			break;
+		case 71: // 'G'
+		case 72: // 'H'
+			window.keyEvent.rotation = 'FTH';
+			window.keyEvent.direction = event.keyCode === 71 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 1;
+			break;
+		case 66: //'B'
+		case 78: //'N'
+			window.keyEvent.rotation = 'FTH';
+			window.keyEvent.direction = event.keyCode === 66 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 2;
+			break;
+		// ---------------------- /
+
 
 		default:
 			window.keyEvent.pressed = false;
