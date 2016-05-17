@@ -35,34 +35,66 @@ var colors = {
 	}
 };
 
+var cubesIDs = [];
+
 var rotations = {
-	'left'   : {
-		'cw' : new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'),
-		'ccw' : new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ')
+	'LTR'   : {
+		'CW' : new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'),
+		'CCW' : new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ')
 	},
-	'middle'   : {
-		'cw' : new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'),
-		'ccw' : new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ')
+	'TTB'   : {
+		'CW' : new THREE.Euler(0, 0, Math.PI / 2, 'XYZ'),
+		'CCW' : new THREE.Euler(0, 0, -Math.PI / 2, 'XYZ')
 	},
-	'right'   : {
-		'cw' : new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'),
-		'ccw' : new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ')
-	},
-	'top'   : {
-		'cw' : new THREE.Euler(0, 0, Math.PI / 2, 'XYZ'),
-		'ccw' : new THREE.Euler(0, 0, -Math.PI / 2, 'XYZ')
-	},
-	'center'   : {
-		'cw' : new THREE.Euler(0, 0, Math.PI / 2, 'XYZ'),
-		'ccw' : new THREE.Euler(0, 0, -Math.PI / 2, 'XYZ')
-	},
-	'bottom'   : {
-		'cw' : new THREE.Euler(0, 0, Math.PI / 2, 'XYZ'),
-		'ccw' : new THREE.Euler(0, 0, -Math.PI / 2, 'XYZ')
+	'FTH' : {
+		'CW' : new THREE.Euler(0, Math.PI / 2, 0, 'XYZ'),
+		'CCW' : new THREE.Euler(0, -Math.PI / 2, 0, 'XYZ')
 	}
 };
 
-var cubesIDs = [];
+var groupingFunctions = {
+	'TTB' : function(layer) {
+		var groupedCubes = new THREE.Object3D();
+		for (var i = 0; i < cubesIDs.length; i++) {
+			for (var j = 0; j < cubesIDs[i].length; j++) {
+				groupedCubes.add(
+					cube.getObjectById(
+						cubesIDs[i][j][layer]
+					)
+				);
+			}
+		}
+		return groupedCubes;
+	},
+	'LTR' : function(layer) {
+		var groupedCubes = new THREE.Object3D();
+		for (var i = 0; i < cubesIDs[layer].length; i++) {
+			for (var j = 0; j < cubesIDs[layer][i].length; j++) {
+				groupedCubes.add(
+					cube.getObjectById(
+						cubesIDs[layer][i][j]
+					)
+				);
+			}
+		}
+
+		return groupedCubes;
+	},
+	'FTH' : function(layer) {
+		var groupedCubes = new THREE.Object3D();
+		for (var i = 0; i < cubesIDs.length; i++) {
+			for (var j = 0; j < cubesIDs[i][layer].length; j++) {
+				groupedCubes.add(
+					cube.getObjectById(
+						cubesIDs[i][layer][j]
+					)
+				);
+			}
+		}
+
+		return groupedCubes;
+	}
+}
 
 function pickRandomProperty(obj) {
     var result;
@@ -125,8 +157,8 @@ function createCube() {
 					getNewColor(),
 					undefined,
 					new THREE.Vector3(
-						(j - 1) * cubePartSize,
 						(i - 1) * cubePartSize,
+						(j - 1) * cubePartSize,
 						(k - 1) * cubePartSize
 					)
 				);
@@ -135,21 +167,14 @@ function createCube() {
 			}
 		}
 	}
+
+	cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
 }
 
+function rotateCube(rotation, direction, layer) {
+	var groupedCubes = groupingFunctions[rotation](layer);
 
-function rotateCube(rotation, layer) {
-	var groupedCubes = new THREE.Object3D();
-	for (var i = 0; i < cubesIDs.length; i++) {
-		for (var j = 0; j < cubesIDs[i].length; j++) {
-			groupedCubes.add(
-				cube.getObjectById(
-					cubesIDs[i][j][layer]
-				)
-			);
-		}
-	}
-	groupedCubes.rotation.copy(rotation);
+	groupedCubes.rotation.copy(rotations[rotation][direction]);
 	groupedCubes.updateMatrixWorld();
 	var child;
 	while (groupedCubes.children.length > 0) {
@@ -259,10 +284,34 @@ function init(){
 
 }
 
+
 function handleKeyUp(event) {
-  if (event.keyCode === 81) {
-    window.isQDown = true;
-  }
+	window.keyEvent = {
+		pressed : true,
+	};
+	switch (event.keyCode) {
+		case 81: // 'Q'
+		case 87: // 'W'
+			window.keyEvent.rotation = 'TTB';
+			window.keyEvent.direction = event.keyCode === 81 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 0;
+			break;
+		case 65: // 'A'
+		case 83: // 'S'
+			window.keyEvent.rotation = 'TTB';
+			window.keyEvent.direction = event.keyCode === 65 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 1;
+			break;
+		case 88: //'X'
+		case 90: //'Z'
+			window.keyEvent.rotation = 'TTB';
+			window.keyEvent.direction = event.keyCode === 90 ? 'CW' : 'CCW';
+			window.keyEvent.layer = 2;
+			break;
+
+		default:
+			window.keyEvent.pressed = false;
+	}
 }
 
 window.addEventListener('keyup', handleKeyUp, false);
@@ -275,9 +324,13 @@ function animate() {
 	// - see details at http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 	requestAnimationFrame( animate );
 
-	if (window.isQDown) {
-		window.isQDown = false;
-		rotateCube(rotations.top.cw, 1);
+	if (window.keyEvent === undefined) {
+		window.keyEvent = {};
+	}
+
+	if (window.keyEvent.pressed) {
+		window.keyEvent.pressed = false;
+		rotateCube(window.keyEvent.rotation, window.keyEvent.direction, window.keyEvent.layer);
 	}
 
 	// do the render
