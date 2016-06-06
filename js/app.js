@@ -9,7 +9,7 @@ var cameraDistance = 15;
 var partsInCubeFace = 3;
 var cubePartSize = 1.5;
 var cubePartDepth = 0.5;
-var colors = [0xffffff, 0x00ffff, 0xff0000, 0x00ff00, 0x0000ff, 0xffff00];
+var colors = [0xffffff, 0x00ffff, 0xff0000, 0x00ff00, 0x0000ff, 0xff00ff];
 
 var cubesIDs = [];
 
@@ -153,7 +153,6 @@ function addCubePart(size, color, rotation, position, serialVector) {
 		}
 		else {
 			faceColor = getNewColor(i);
-			console.log(faceColor);
 		}
 	    geometry.faces[i].color.setHex(faceColor);
 	    geometry.faces[i + 1].color.setHex(faceColor);
@@ -214,13 +213,22 @@ function createCube() {
 			}
 		}
 	}
-	//cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
+	cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
 }
+
+function addEulers(a, b) {
+	return new THREE.Euler(
+		a._x + b._x,
+		a._y + b._y,
+		a._z + b._z,
+		'XYZ'
+	);
+};
 
 function rotateCube(rotation, direction, layer) {
 	var groupedCubes = groupingFunctions[rotation](layer);
-
-	groupedCubes.rotation.copy(rotations[rotation][direction]);
+	rotation = rotations[rotation][direction];
+	groupedCubes.rotation.copy(rotation);
 	groupedCubes.updateMatrixWorld();
 	var child;
 	while (groupedCubes.children.length > 0) {
@@ -229,6 +237,7 @@ function rotateCube(rotation, direction, layer) {
 			groupedCubes.children[0]
 		);
 		child.position.copy((new THREE.Vector3()).setFromMatrixPosition(child.matrixWorld));
+		child.rotation.copy(addEulers(rotation, child.rotation));
 	}
 }
 
@@ -297,11 +306,6 @@ function init(){
 	THREEx.WindowResize.bind(renderer, camera);
 	// allow 'p' to make screenshot
 	THREEx.Screenshot.bindKey(renderer);
-	// allow 'f' to go fullscreen where this feature is supported
-	if( THREEx.FullScreen.available() ){
-		THREEx.FullScreen.bindKey();		
-		document.getElementById('inlineDoc').innerHTML	+= "- <i>f</i> for fullscreen";
-	}
 
 	// here you add your objects
 	// - you will most likely replace this part by your own
