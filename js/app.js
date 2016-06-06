@@ -3,8 +3,9 @@ var camera, cameraControls;
 
 var cube = new THREE.Object3D();
 
-var cameraDistance = 15;
+var cubeBurst = false;
 
+var cameraDistance = 15;
 var partsInCubeFace = 3;
 var cubePartSize = 1.5;
 var cubePartDepth = 0.5;
@@ -30,10 +31,10 @@ var rotations = {
 var isFace = {
 	'right'  : function(idx) {return idx === 0 || idx === 1;},
 	'left'   : function(idx) {return idx === 1 || idx === 2;},
-	'front'  : function(idx) {return idx === 3 || idx === 4;},
-	'hind'   : function(idx) {return idx === 5 || idx === 6;},
-	'bottom' : function(idx) {return idx === 7 || idx === 8;},
-	'top'    : function(idx) {return idx === 9 || idx === 10;}
+	'bottom'  : function(idx) {return idx === 3 || idx === 4;},
+	'top'   : function(idx) {return idx === 5 || idx === 6;},
+	'front' : function(idx) {return idx === 7 || idx === 8;},
+	'hind'    : function(idx) {return idx === 9 || idx === 10;}
 };
 
 var groupingFunctions = {
@@ -137,11 +138,18 @@ function addCubePart(size, color, rotation, position, serialVector) {
 	if (position === undefined) {
 		position = new THREE.Vector3(0, 0, 0);
 	}
+	// For debug purpose
+	if (cubeBurst) {
+		position.x = serialVector.x - 1;
+		position.y = serialVector.y - 1;
+		position.z = serialVector.z - 1;
+		position.multiplyScalar(3);
+	}
 	var geometry = new THREE.BoxGeometry(size, size, size);
 	var faceColor;
 	for ( var i = 0; i < geometry.faces.length; i += 2) {
 		if (!isFaceVisible(serialVector, i)) {
-			faceColor = 0x00ff00;
+			faceColor = 0x000000;
 		}
 		else {
 			faceColor = getNewColor(i);
@@ -196,17 +204,17 @@ function createCube() {
 					undefined,
 					new THREE.Vector3(
 						(i - 1) * cubePartSize, // X
-						(j - 1) * cubePartSize, // Z
-						(k - 1) * cubePartSize // Y
+						(j - 1) * cubePartSize, // Y
+						(k - 1) * cubePartSize // Z
 					),
-					new THREE.Vector3(i, k, j)
+					new THREE.Vector3(i, j, k)
 				);
 				cubesIDs[i][j].push(cubePart.id);
 				cube.add(cubePart);
 			}
 		}
 	}
-	cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
+	//cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
 }
 
 function rotateCube(rotation, direction, layer) {
