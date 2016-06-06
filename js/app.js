@@ -8,32 +8,7 @@ var cameraDistance = 15;
 var partsInCubeFace = 3;
 var cubePartSize = 1.5;
 var cubePartDepth = 0.5;
-var colors = {
-	'white' : {
-		'hex' : 0xffffff,
-		'count' : 9
-	},
-	'black' : {
-		'hex' : 0x000000,
-		'count' : 9
-	},
-	'red'   : {
-		'hex' : 0xff0000,
-		'count' : 9
-	},
-	'green' : {
-		'hex' : 0x00ff00,
-		'count' : 9
-	},
-	'blue'  : {
-		'hex' : 0x0000ff,
-		'count' : 9
-	},
-	'yellow': {
-		'hex' : 0xffff00,
-		'count' : 9
-	}
-};
+var colors = [0xffffff, 0x00ffff, 0xff0000, 0x00ff00, 0x0000ff, 0xffff00];
 
 var cubesIDs = [];
 
@@ -50,6 +25,15 @@ var rotations = {
 		'CW' : new THREE.Euler(0, Math.PI / 2, 0, 'XYZ'),
 		'CCW' : new THREE.Euler(0, -Math.PI / 2, 0, 'XYZ')
 	}
+};
+
+var isFace = {
+	'right'  : function(idx) {return idx === 0 || idx === 1;},
+	'left'   : function(idx) {return idx === 1 || idx === 2;},
+	'front'  : function(idx) {return idx === 3 || idx === 4;},
+	'hind'   : function(idx) {return idx === 5 || idx === 6;},
+	'bottom' : function(idx) {return idx === 7 || idx === 8;},
+	'top'    : function(idx) {return idx === 9 || idx === 10;}
 };
 
 var groupingFunctions = {
@@ -105,9 +89,48 @@ function pickRandomProperty(obj) {
     return result;
 };
 
-if( !init() )	animate();
+function hexForSerialVector(sv) {
+	return (((sv.x << 16) + sv.y << 8) + sv.z) * 10 % 255;
+};
 
-function addCubePart(size, color, rotation, position) {
+function any(funcArr, obj) {
+	var result = false;
+	for (var i = 0; i < funcArr.length; i++) {
+		result |= funcArr[i](obj);
+	}
+	return result;
+};
+
+function isFaceVisible(serialVector, faceIdx) {
+	var funcArr = [];
+	switch (serialVector.z) {
+		case 0:
+			funcArr.push(isFace.hind);
+			break;
+		case 2:
+			funcArr.push(isFace.front);
+			break;
+	}
+	switch (serialVector.y) {
+		case 0:
+			funcArr.push(isFace.top);
+			break;
+		case 2:
+			funcArr.push(isFace.bottom);
+			break;
+	}
+	switch (serialVector.x) {
+		case 0:
+			funcArr.push(isFace.left);
+			break;
+		case 2:
+			funcArr.push(isFace.right);
+			break;
+	}
+	return any(funcArr, faceIdx);
+};
+
+function addCubePart(size, color, rotation, position, serialVector) {
 	if (rotation === undefined) {
 		rotation = new THREE.Euler(0, 0, 0, 'XYZ');
 	}
@@ -115,9 +138,17 @@ function addCubePart(size, color, rotation, position) {
 		position = new THREE.Vector3(0, 0, 0);
 	}
 	var geometry = new THREE.BoxGeometry(size, size, size);
+	var faceColor;
 	for ( var i = 0; i < geometry.faces.length; i += 2) {
-	    geometry.faces[i].color.setHex(color.hex);
-	    geometry.faces[i + 1].color.setHex(color.hex);
+		if (!isFaceVisible(serialVector, i)) {
+			faceColor = 0x00ff00;
+		}
+		else {
+			faceColor = getNewColor(i);
+			console.log(faceColor);
+		}
+	    geometry.faces[i].color.setHex(faceColor);
+	    geometry.faces[i + 1].color.setHex(faceColor);
 	}
 
 	var material = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
@@ -135,13 +166,20 @@ function addCubePart(size, color, rotation, position) {
 	return obj;
 };
 
-function getNewColor() {
-	var color = colors[pickRandomProperty(colors)];
-	while (color.count < 1) {
-		color = colors[pickRandomProperty(colors)];
-	}
-	colors[pickRandomProperty(colors)].count--;
-	return color;
+function getNewColor(faceIdx) {
+	if (isFace.right(faceIdx)) 
+		return colors[0];
+	if (isFace.left(faceIdx))
+		return colors[1];
+	if (isFace.front(faceIdx))
+		return colors[2];
+	if (isFace.hind(faceIdx))
+		return colors[3];
+	if (isFace.top(faceIdx))
+		return colors[4];
+	if (isFace.bottom(faceIdx))
+		return colors[5];
+	return 0x000000;
 };
 
 function createCube() {
@@ -154,20 +192,20 @@ function createCube() {
 			for (var k = 0; k < partsInCubeFace; k++) {
 				cubePart = 	addCubePart(
 					cubePartSize,
-					getNewColor(),
+					undefined,
 					undefined,
 					new THREE.Vector3(
-						(i - 1) * cubePartSize,
-						(j - 1) * cubePartSize,
-						(k - 1) * cubePartSize
-					)
+						(i - 1) * cubePartSize, // X
+						(j - 1) * cubePartSize, // Z
+						(k - 1) * cubePartSize // Y
+					),
+					new THREE.Vector3(i, k, j)
 				);
 				cubesIDs[i][j].push(cubePart.id);
 				cube.add(cubePart);
 			}
 		}
 	}
-
 	cube.rotation.copy(new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'));
 }
 
@@ -395,3 +433,6 @@ function render() {
 	// actually render the scene
 	renderer.render( scene, camera );
 }
+
+// Do the thing
+if( !init() )	animate();
